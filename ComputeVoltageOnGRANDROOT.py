@@ -51,6 +51,16 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
         #TODO: Check consitency of RunID/EventID
         # SimShower.GetEntry(idx)
 
+        # Clear the vectors for the new event
+        SimSignal['signal_sim'].clear()
+        SimSignal_Detector['det_id'].clear()
+        SimSignal_Detector['det_pos_shc'].clear()
+        SimSignal_Detector['det_type'].clear()
+        SimSignal_Detector['t_0'].clear()
+        SimSignal_Detector['trace_x'].clear()
+        SimSignal_Detector['trace_y'].clear()
+        SimSignal_Detector['trace_z'].clear()
+
         EventID=SimShower.evt_id
         Zenith=SimShower.shower_zenith
         Azimuth=SimShower.shower_azimuth

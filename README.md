@@ -36,3 +36,5 @@ Finally, to test the suite you can do
 
 python3 RunTest.py TestFile.root
 python3 PlotEventRoot.py TestFile.root
+
+NOTE: Event2 has no traces ON PURPOSE to test what happens when the trees have different number of entries

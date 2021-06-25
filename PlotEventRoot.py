@@ -16,7 +16,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 def PlotEventOnROOT(inputfilename):
 
     plt.rc('font', family='serif', size=16)
-    width=7.2
+    width=7.2*3
     height=width/1.45
 
     #TODO:handle exceptions: input file not vaid,etc
@@ -101,9 +101,9 @@ def PlotEventOnROOT(inputfilename):
             
             print("etime[600]",etime[600],"efield[600]",efieldx[600],efieldy[600],efieldz[600])
              
-            voltagex=np.array(SimSignal.Detectors_trace_x[i])
-            voltagey=np.array(SimSignal.Detectors_trace_y[i])
-            voltagez=np.array(SimSignal.Detectors_trace_z[i])                        
+            voltagex=np.array(SimSignal.Detectors_trace_x[i])*5
+            voltagey=np.array(SimSignal.Detectors_trace_y[i])*5
+            voltagez=np.array(SimSignal.Detectors_trace_z[i])*5                       
             t0=SimSignal.Detectors_t_0[i]
             vtime=np.arange(vtpre+t0,vtpost+t0+10*vtbinsize,vtbinsize)
             vtime=vtime[0:(len(voltagex))]
@@ -112,13 +112,13 @@ def PlotEventOnROOT(inputfilename):
                              
             print("efield lenght",len(efieldx),"signal lenght",len(voltagex))
               
-            fig2, (ax1, ax2, ax3)  = plt.subplots(1, 3, sharey='row')
+            fig2, (ax1, ax2, ax3)  = plt.subplots(1, 3, sharey='row',figsize=(width,height))
             #fig2 = plt.figure(2,figsize=(width,height), facecolor='w', edgecolor='k')
             fig2.suptitle("Antenna "+str(DetectorID))
             #ax1=fig2.add_subplot(131)
             ax1.set_title('NS component',fontsize=12)
             ax1.set_xlabel('time (ns)')
-            ax1.set_ylabel('Amplitude')                    
+            ax1.set_ylabel('Amplitude (Voltage x5)')                    
             yvalues=efieldx
             im=ax1.plot(etime,yvalues,label="efieldx")
             yvalues=voltagex
@@ -147,7 +147,9 @@ def PlotEventOnROOT(inputfilename):
             #end for antennas
 
         #End for events
-                  
+    print("About to Close File")    
+    infilehandle.Close()
+    print("Closed")           
 
 
 if __name__ == '__main__':
