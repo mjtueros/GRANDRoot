@@ -17,7 +17,9 @@ and you will need PyROOT installed on your python
 you must create the environment variables so that the scripts find this libraries
 
 you can put this on your $HOME .bashrc
+
 #Setting up PyROOT
+
 export LD_LIBRARY_PATH=$ROOTSYS/lib:$PYTHONDIR/lib:$LD_LIBRARY_PATH
 export PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH
 
