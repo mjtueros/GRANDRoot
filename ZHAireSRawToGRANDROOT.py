@@ -10,9 +10,9 @@ logging.basicConfig(level=logging.DEBUG)
 #
 #you can get ZHAIRES python from https://github.com/mjtueros/ZHAireS-Python (checkout the Development or DevelopmentLeia branch)
 #I use this environment variable to let python know where to find it, but alternatively you just copy the AiresInfoFunctions.py file on the same dir you are using this.
-ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
-sys.path.append(ZHAIRESPYTHON)
-import AiresInfoFunctions as AiresInfo
+#ZHAIRESPYTHON=os.environ["ZHAIRESPYTHON"]
+#sys.path.append(ZHAIRESPYTHON)
+import AiresInfoFunctionsGRANDROOT as AiresInfo
 import GRANDRoot 
 import ROOT
 from copy import deepcopy
@@ -51,7 +51,9 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     SimShowerInfo=True
     SimEfieldInfo=True 
 
+    #########################################################################################################
     #ZHAIRES Sanity Checks
+    #########################################################################################################
     #TODO: Handle when InputFolder Does not exist, or is invalid (.sry,.idf and .trace files does not exist)
  
     idffile=glob.glob(InputFolder+"/*.idf")
@@ -74,8 +76,10 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         logging.critical("defaulting to (0.0,0)")
         inpfile=[None]
         CorePosition=(0.0,0.0,0.0)
-		
+	
+	###########################################################################################################	
     #Root Sanity Checks
+    ###########################################################################################################
     #TODO: Handle when FileName or RootFileHandle is invalid (does not exist, or is not writable, or whatever we decide is invalid (i.e. must already have the trees).)
     #TODO: Handle to check that SimShowerRun exist and the RunID is valid
     #TODO: these things should not be passed into this function as globals
@@ -113,7 +117,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         #print("simshower branches", SimShower)
 
         #########################################################################################################################
-        # Part I: get the information
+        # Part I: get the information from ZHAIRES (for COREAS, its stuff would be here)
         #########################################################################################################################   
         #TODO: Check units are in GRAND conventions
         Primary= AiresInfo.GetPrimaryFromSry(sryfile[0],"GRAND")
@@ -127,6 +131,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         XmaxPosition= [float(XmaxX)*1000.0, float(XmaxY)*1000.0, float(XmaxZ)*1000.0]
         SlantXmax=AiresInfo.GetSlantXmaxFromSry(sryfile[0])
         InjectionAltitude=AiresInfo.GetInjectionAltitudeFromSry(sryfile[0])
+
         #TODO: Add Injection Postion. On neutrino showers this is important (and there can be no Core position)		
         Lat,Long=AiresInfo.GetLatLongFromSry(sryfile[0])
         GroundAltitude=AiresInfo.GetGroundAltitudeFromSry(sryfile[0])
@@ -143,16 +148,9 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         RandomSeed=AiresInfo.GetRandomSeedFromSry(sryfile[0])
         CPUTime=AiresInfo.GetTotalCPUTimeFromSry(sryfile[0],"N/A")
 
-        #TODO: These are ZHAireS specific parameters. Other simulators wont have these parameters, and might have others. How to handle this?
-        #Should we save the input and sry file inside the ROOT file? like a string? And parse simulation software specific parameters from there?
-        # LWP: perhaps we should have a separate tree for universal simulator parameters (that would not exist for a real experiment) and specific trees for specific simulators? But then we can forget about automatic parsing of such non-universal ttree. Perhaps some longish string in the universal simulator tree, to be parsed if anyone wants and knows how to, would be better?
-        RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])
-        WeightFactor=AiresInfo.GetWeightFactorFromSry(sryfile[0])
-        GammaEnergyCut=AiresInfo.GetGammaEnergyCutFromSry(sryfile[0])
-        ElectronEnergyCut=AiresInfo.GetElectronEnergyCutFromSry(sryfile[0])
-        MuonEnergyCut=AiresInfo.GetMuonEnergyCutFromSry(sryfile[0])
-        MesonEnergyCut=AiresInfo.GetMesonEnergyCutFromSry(sryfile[0])
-        NucleonEnergyCut=AiresInfo.GetNucleonEnergyCutFromSry(sryfile[0])
+        ###########################################################################################################################
+        # Convert to GP300 coordinates (here is where customization comes, input specific conventions)
+        ########################################################################################################################## 
 
         #TODO: Document how the core position needs to be stored in the .inp. 
         #TODO  Decide coordinate system (site specific): Maybe store lat/lon and altitude of origin of coordinates, and put a cartesian there?
@@ -164,6 +162,18 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         else:
             CorePosition=(0,0,0)  
         print("CorePosition:",CorePosition)
+
+        #TODO: These are ZHAireS specific parameters. Other simulators wont have these parameters, and might have others. How to handle this?
+        #Should we save the input and sry file inside the ROOT file? like a string? And parse simulation software specific parameters from there?
+        # LWP: perhaps we should have a separate tree for universal simulator parameters (that would not exist for a real experiment) and specific trees for specific simulators? But then we can forget about automatic parsing of such non-universal ttree. Perhaps some longish string in the universal simulator tree, to be parsed if anyone wants and knows how to, would be better?
+        RelativeThinning=AiresInfo.GetThinningRelativeEnergyFromSry(sryfile[0])
+        WeightFactor=AiresInfo.GetWeightFactorFromSry(sryfile[0])
+        GammaEnergyCut=AiresInfo.GetGammaEnergyCutFromSry(sryfile[0])
+        ElectronEnergyCut=AiresInfo.GetElectronEnergyCutFromSry(sryfile[0])
+        MuonEnergyCut=AiresInfo.GetMuonEnergyCutFromSry(sryfile[0])
+        MesonEnergyCut=AiresInfo.GetMesonEnergyCutFromSry(sryfile[0])
+        NucleonEnergyCut=AiresInfo.GetNucleonEnergyCutFromSry(sryfile[0])
+
 
         ############################################################################################################################# 
         # Part II: Fill SimShower TTree	
@@ -343,7 +353,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         logging.critical("no trace files found in "+InputFolder+"Skipping SimEfield") #TODO: handle this exeption more elegantl
     
 	##############################################################################################################################
-	# LONGITUDINAL TABLES
+	# LONGITUDINAL TABLES (not implemented yet, will need to have ZHAIRES installed on your system and the Official version of AiresInfoFunctions)
 	##############################################################################################################################
 
     if(NLongitudinal):
