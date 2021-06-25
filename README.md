@@ -22,8 +22,11 @@ export LD_LIBRARY_PATH=$ROOTSYS/lib:$PYTHONDIR/lib:$LD_LIBRARY_PATH
 export PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH
 
 #directory where the GRAND radio-simus package with
+
 export RADIOSIMUS=/home/mjtueros/GRAND/ComputeVoltage/radio-simus
+
 #directory wheere ZHAireS-Python is located
+
 export ZHAIRESPYTHON=/home/mjtueros/AiresRepository/Dropbox/GitAiresPython/ZHAireS-Python
 
 
