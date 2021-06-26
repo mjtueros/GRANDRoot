@@ -78,7 +78,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         CorePosition=(0.0,0.0,0.0)
 	
 	###########################################################################################################	
-    #Root Sanity Checks
+    #Root Sanity Checks  #TODO: Discuss with Lech: Should these be functions in GRANDRoot once its mature?  so its always done in the same way?
     ###########################################################################################################
     #TODO: Handle when FileName or RootFileHandle is invalid (does not exist, or is not writable, or whatever we decide is invalid (i.e. must already have the trees).)
     #TODO: Handle to check that SimShowerRun exist and the RunID is valid
@@ -100,7 +100,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     #############################################################################################################################
     if(SimShowerInfo):
         #########################################################################################################################
-        # Part 0: Set up the tree
+        # Part 0: Set up the tree. #TODO: Discuss with Lech: Should this be all a function in GRANDRoot once its mature?  so its always done in the same way?
         #########################################################################################################################
         #TODO: Handle to check that SimShower exist and the RunID is valid
         create_branches = False
@@ -148,10 +148,12 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         RandomSeed=AiresInfo.GetRandomSeedFromSry(sryfile[0])
         CPUTime=AiresInfo.GetTotalCPUTimeFromSry(sryfile[0],"N/A")
 
-        ###########################################################################################################################
-        # Convert to GP300 coordinates (here is where customization comes, input specific conventions)
+        ##########################################################################################################################
+        # Part I.1: Convert to GP300 coordinates (here is where customization comes, input specific conventions) (TODO) 
         ########################################################################################################################## 
-
+        # I will asume X is local magnetic north. Azimuths and Zenith
+        # for sites big enough, local magnetic north can change over the array? Do we need to care for this
+        
         #TODO: Document how the core position needs to be stored in the .inp. 
         #TODO  Decide coordinate system (site specific): Maybe store lat/lon and altitude of origin of coordinates, and put a cartesian there?
         #      An incoming porblem is that zhaires on its simulations uses a fixed earth radius...so the simulation wont be 100% consistent with the "geoid" grand coordinates. 
@@ -176,7 +178,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
 
         ############################################################################################################################# 
-        # Part II: Fill SimShower TTree	
+        # Part II: Fill SimShower TTree	#TODO: Discuss with Lech: Should this be all a function in GRANDRoot once its mature? to hide all pushback and all those things? And so other people do the same?
         ############################################################################################################################  
         SimShower['run_id'][:]=RunID
         SimShower['evt_id'][:]=EventID
@@ -223,7 +225,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
     
     if(SimEfieldInfo and len(tracefiles)>0):
         #########################################################################################################################
-        # Part 0: Set up the tree
+        # Part 0: Set up the tree TODO: Discuss with Lech: Should these be functions in GRANDRoot once its mature? 
         #########################################################################################################################		
         #TODO: Handle to check that SimEfield exist and the RunID is valid
         create_branches = False
@@ -254,6 +256,13 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
         TimeWindowMin=AiresInfo.GetTimeWindowMinFromSry(sryfile[0])
         TimeWindowMax=AiresInfo.GetTimeWindowMaxFromSry(sryfile[0])
 
+        #TODO:Add magnetic field information 
+
+        ##########################################################################################################################
+        # Part I.1: Convert to GP300 coordinates (here is where customization comes, input specific conventions) (TODO) 
+        ##########################################################################################################################
+        #Here Magnetic field might need to be converted to GRAND coordinates       
+
         ############################################################################################################################# 
         # Part II: Fill SimEfield TTree	
         ############################################################################################################################ 
@@ -270,30 +279,31 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
  
         ############################################################################################################################# 
-        # Part III: Fill SimEfield Detector part
+        # Fill SimEfield Detector part
         ############################################################################################################################ 
-        #Go through the available antennas and CreateAndFill SimEfieldDetectorIndex
+	    #########################################################################################################################
+        # Part I: get the information
+        ######################################################################################################################### 
         IDs,antx,anty,antz,antt=AiresInfo.GetAntennaInfoFromSry(sryfile[0])
-
+ 
         if(IDs[0]==-1 and antx[0]==-1 and anty[0]==-1 and antz[0]==-1 and antt[0]==-1):
 	         logging.critical("hey, no antennas found in event sry "+ str(EventID)+" SimEfield not produced")         #TODO: handle this exeption more elegantly
 
         else:		
-            # 
+
+            #convert to 32 bits so it takes less space 
             antx=np.array(antx, dtype=np.float32)
             anty=np.array(anty, dtype=np.float32)
             antz=np.array(antz, dtype=np.float32)
             antt=np.array(antt, dtype=np.float32)
             #
-                
+   
+           # Important remark. If we need to take into account round earth, then we will need to rotate the electric field components to go to a cartesian frame centered in the array                
             #TODO: check that the number of trace files found is coincidient with the number of antennas found from the sry  
             logging.info("found "+str(len(tracefiles))+" antenna trace files") 
 
             for ant in tracefiles:
                 #print("into antenna", ant)
-                #SimEfield_Detector['trace_x'].clear() TODO: When do i have to do this? shouldnt it go inside GRANDRoot.Setup_SimEfieldDetector_Branches?
-                #SimEfield_Detector['trace_y'].clear()
-                #SimEfield_Detector['trace_z'].clear()
 
                 ant_number = int(ant.split('/')[-1].split('.trace')[0].split('a')[-1]) # index in selected antenna list. this only works if all antenna files are consecutive
                                                                                        # TODO: Check for this, and handle what hapens if it fails. Maybe there is a more elegant solution 
@@ -303,6 +313,16 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 
                 efield = np.loadtxt(ant,dtype='f4') #we read the electric field as a numpy array
 
+                 
+                ##########################################################################################################################
+                # Part I.1: Convert to GP300 coordinates (here is where customization comes, input specific conventions) (TODO) 
+                ##########################################################################################################################
+                #TODO: Important remark. If we need to take into account round earth, then we will need to rotate the electric field components to go to a cartesian frame centered in the array
+                #this needs to be provided by grandlib
+
+                ############################################################################################################################# 
+                # Part II: Fill SimEfield Detector	TODO: Discuss with Lech: Should these be functions in GRANDRoot once its mature? 
+                ############################################################################################################################ 
                 #Populate what we can                
                 SimEfield_Detector['det_id'].push_back(DetectorID)                
                 #
@@ -586,6 +606,7 @@ def ZHAiresRawToGRANDROOT(FileName, RunID, EventID, InputFolder, SimEfieldInfo=T
 #def ZHAiresRawToSimShowerRun(FileName, RunID, EventID, InputFolder):
 
 
+# TODO: This should probably be part of GRANDRoot.py.?
 # Check if the EventID does not already exist in the TTrees
 # TODO: Which TTree has all the IDs? Now checking just 2 of them
 

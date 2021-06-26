@@ -2,12 +2,14 @@ import os
 import sys
 import logging
 import numpy as np
+# Commented to avoid the dependency on RADIOSIMUS, so that the repository is self contained and easy to do tests.
+# now the signal is just the filtered electric field 
 #root_dir = os.path.realpath(os.path.join(os.path.split(__file__)[0], "../radio-simus")) # = $PROJECT
-root_dir=os.environ["RADIOSIMUS"] #this requires the radi simus package from grand
-sys.path.append(os.path.join(root_dir, "lib", "python"))
-from radio_simus.in_out import _table_voltage
-from radio_simus.computevoltage import compute_antennaresponse
-from radio_simus.signal_processing import filters
+#root_dir=os.environ["RADIOSIMUS"] #this requires the radi simus package from grand
+#sys.path.append(os.path.join(root_dir, "lib", "python"))
+#from radio_simus.in_out import _table_voltage
+#from radio_simus.computevoltage import compute_antennaresponse
+#from radio_simus.signal_processing import filters
 import GRANDRoot 
 import ROOT
 from copy import deepcopy
@@ -114,12 +116,17 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
             #Configuration should be a little more "present" in the function call,
             #also maybe the library to handle .ini files would be more profesional and robust than current implementation
 
-            voltage = compute_antennaresponse(efield, Zenith, Azimuth, alpha=0, beta=0)
-            #for Lech. Getting compute_antennaresponse might not be needed for you. You can just replace for
-            #voltage=efield # LWP: what do you mean: for me? (I meant that if you needed to run the script. and you didnt have compue_antennaresponse, you can skip it by making the voltage=efield)
+            #voltage = compute_antennaresponse(efield, Zenith, Azimuth, alpha=0, beta=0)
+            fs=1e9/tbinsize #in Hz
+            nu_low=1e9*0.03   #in Hz
+            nu_high=1e9*0.3   #in Hz            
+            voltagex= butter_bandpass_filter(efieldx,nu_low,nu_high,fs) #fs is the sampling frequency i
+            voltagey= butter_bandpass_filter(efieldy,nu_low,nu_high,fs)
+            voltagez= butter_bandpass_filter(efieldz,nu_low,nu_high,fs)              
+            
             
             print("Got VOLTAGE")
-            print(voltage[600])
+            print(voltagex[600],voltagey[600],voltagez[600])
             
             # LWP: push_back is only for std:vector, which can (normally) hold only 1 specific type. I think here we would just have standard TTree branches and thus use the standard something[0]=something convention
             SimSignal_Detector['det_id'].push_back(DetectorID)
@@ -130,19 +137,19 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
             SimSignal_Detector['t_0'].push_back(t0)
             
             #
-            voltagex=deepcopy(voltage[:,1])
+            #voltagex=deepcopy(voltage[:,1])
             voltagex=np.array(voltagex, dtype=np.float32)
             tmp_trace_x  = ROOT.vector("float")()
             tmp_trace_x.assign(voltagex)
             SimSignal_Detector['trace_x'].push_back(tmp_trace_x)
  
-            voltagey=deepcopy(voltage[:,2])
+            #voltagey=deepcopy(voltage[:,2])
             voltagey=np.array(voltagey, dtype=np.float32)
             tmp_trace_y  = ROOT.vector("float")()
             tmp_trace_y.assign(voltagey)
             SimSignal_Detector['trace_y'].push_back(tmp_trace_y)            
 
-            voltagez=deepcopy(voltage[:,3])
+            #voltagez=deepcopy(voltage[:,3])
             voltagez=np.array(voltagez, dtype=np.float32)            
             tmp_trace_z  = ROOT.vector("float")()
             tmp_trace_z.assign(voltagez)
@@ -175,7 +182,24 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
     print("****************CLOSED!")      
 
   else:
+
     logging.critical("input file " + inputfilename + " does not exist or is not a directory. ComputeVoltageOnSHDF5 cannot continue")
+
+
+
+from scipy.signal import butter, sosfilt, sosfreqz
+#taken from https://stackoverflow.com/questions/12093594/how-to-implement-band-pass-butterworth-filter-with-scipy-signal-butter
+def butter_bandpass(lowcut, highcut, fs, order=5):
+        nyq = 0.5 * fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+        return sos
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+        sos = butter_bandpass(lowcut, highcut, fs, order=order)
+        y = sosfilt(sos, data)
+        return y
 
 
 if __name__ == '__main__':

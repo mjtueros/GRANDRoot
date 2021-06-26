@@ -101,9 +101,9 @@ def PlotEventOnROOT(inputfilename):
             
             print("etime[600]",etime[600],"efield[600]",efieldx[600],efieldy[600],efieldz[600])
              
-            voltagex=np.array(SimSignal.Detectors_trace_x[i])*5
-            voltagey=np.array(SimSignal.Detectors_trace_y[i])*5
-            voltagez=np.array(SimSignal.Detectors_trace_z[i])*5                       
+            voltagex=np.array(SimSignal.Detectors_trace_x[i])
+            voltagey=np.array(SimSignal.Detectors_trace_y[i])
+            voltagez=np.array(SimSignal.Detectors_trace_z[i])                       
             t0=SimSignal.Detectors_t_0[i]
             vtime=np.arange(vtpre+t0,vtpost+t0+10*vtbinsize,vtbinsize)
             vtime=vtime[0:(len(voltagex))]
@@ -118,7 +118,7 @@ def PlotEventOnROOT(inputfilename):
             #ax1=fig2.add_subplot(131)
             ax1.set_title('NS component',fontsize=12)
             ax1.set_xlabel('time (ns)')
-            ax1.set_ylabel('Amplitude (Voltage x5)')                    
+            ax1.set_ylabel('Amplitude')                    
             yvalues=efieldx
             im=ax1.plot(etime,yvalues,label="efieldx")
             yvalues=voltagex
