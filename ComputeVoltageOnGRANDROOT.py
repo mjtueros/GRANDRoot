@@ -176,6 +176,7 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
         #Now save the tree
         SimSignal_tree.Write("", ROOT.TObject.kWriteDelete) #this is to avoid having several copies of the tree in the index of the file
     
+    SimEfield.RemoveFriend(SimShower)
     print("*********ABOUT TO CLOSE")
     infilehandle.Close()        
     outfilehandle.Close() #close 
