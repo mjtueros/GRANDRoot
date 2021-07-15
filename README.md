@@ -22,3 +22,17 @@ https://guides.github.com/introduction/flow/
 # Documentation
 
 This version features a documentation made using sphinx
+
+## Generating the documentation
+
+### Requirements
+
+Install Sphinx and the documentation theme
+
+``pip install -U Sphinx``
+
+``pip install sphinx-rtd-theme``
+
+### Build the documentation
+
+Enter the ``doc`` directory and run ``make``
