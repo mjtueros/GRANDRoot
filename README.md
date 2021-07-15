@@ -19,3 +19,6 @@ Since im not experienced in github, lets follow this simple development scheme, 
 
 https://guides.github.com/introduction/flow/
 
+# Documentation
+
+This version features a documentation made using sphinx
