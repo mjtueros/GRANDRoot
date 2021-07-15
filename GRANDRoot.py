@@ -25,6 +25,16 @@ EventLevel information should be as complete as possible to make event
 
 # Create or Set rhe TTree branches for SimShower_Run (Simulated Showeer Run Level information )
 def Setup_SimShowerRun_Branches(tree,create_branches=True):
+    """
+    Create or Set rhe TTree branches for SimShower_Run (Simulated Showeer Run Level information )
+
+    Args:
+        tree (string): a TTree
+        create_branches (bool): toggles the branch creation on and off
+
+    Returns:
+        values: the current values for the branches
+    """
     t = tree
     # Reset all branch addresses just in case
     t.ResetBranchAddresses()
