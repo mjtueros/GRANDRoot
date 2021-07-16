@@ -35,4 +35,4 @@ Install Sphinx and the documentation theme
 
 ### Build the documentation
 
-Enter the ``doc`` directory and run ``make``
+Enter the ``doc`` directory and run ``make html``
