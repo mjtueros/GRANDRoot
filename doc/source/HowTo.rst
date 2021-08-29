@@ -11,7 +11,7 @@ The requirements to generate this documentation are `Sphinx <https://www.sphinx-
     pip install -U Sphinx
     pip install sphinx-rtd-theme
 
-The them `python_docs_theme <https://pypi.org/project/python-docs-theme/>`_ can also be a nice choice.
+The theme `python_docs_theme <https://pypi.org/project/python-docs-theme/>`_ can also be a nice choice.
 
 Configuration
 =============
@@ -96,4 +96,4 @@ Here is an example of code documentation
 Building the documentation
 ==========================
 
-In order to build the documentation, go to the ``doc`` directory and run ``make``.
+In order to build the documentation, go to the ``doc`` directory and run ``make html``.
