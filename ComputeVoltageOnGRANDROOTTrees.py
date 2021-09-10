@@ -10,8 +10,9 @@ import numpy as np
 #from radio_simus.in_out import _table_voltage
 #from radio_simus.computevoltage import compute_antennaresponse
 #from radio_simus.signal_processing import filters
-import GRANDRoot 
+import GRANDRoot
 import ROOT
+from GRANDRootTrees import *
 from copy import deepcopy
 
 logging.basicConfig(level=logging.DEBUG)
@@ -22,8 +23,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 #this computes the voltage on all the antennas
 
 def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
-
-  #TODO:handle exceptions: input or output file not vaid, RunID not valid,etc
+    #TODO:handle exceptions: input or output file not vaid, RunID not valid,etc
 
   if os.path.isfile(inputfilename):
     if(outfilename=="N/A"):
@@ -34,17 +34,21 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
       outfilehandle=ROOT.TFile(outfilename, 'UPDATE')
 
     #preparing input trees #TODO: Handle when something does not exist.
-    SimShower=infilehandle.SimShower #this gets the SimShower tree and sets the addresses
-    SimEfield=infilehandle.SimEfield #this gets the SimEfield tree and sets the addresses
+    # SimShower=infilehandle.SimShower #this gets the SimShower tree and sets the addresses
+    # SimEfield=infilehandle.SimEfield #this gets the SimEfield tree and sets the addresses
+    SimShower=SimShowerTree(_tree=infilehandle.SimShower) #this gets the SimShower tree and sets the addresses
+    SimEfield=SimEfieldTree(_tree=infilehandle.SimEfield) #this gets the SimEfield tree and sets the addresses
 
     NumberOfEvents=SimEfield.GetEntries() #TODO: IMPLEMENT THE FRIENDS SO THAT SIMSHOWER AND SIMEFIELD ARE SYNCHRONIZED
     logging.info("Computing Voltages for "+inputfilename+", found "+str(NumberOfEvents)+" events")
      
     #preparing SimSignal output tree #TODO: handle when it already exists. Check for SimSignalRun existance. Check for RunID consistency
-    SimSignal_tree = ROOT.TTree("SimSignal", "SimSignal")
-      
-    SimSignal=GRANDRoot.Setup_SimSignal_Branches(SimSignal_tree)
-    SimSignal_Detector=GRANDRoot.Setup_SimSignalDetector_Branches(SimSignal_tree)
+    # SimSignal_tree = ROOT.TTree("SimSignal", "SimSignal")
+    SimSignal_Detector = SimSignal = SimSignal_tree = SimSignalTree()
+    #SimSignal_tree = SimSignalTree()
+
+    # SimSignal=GRANDRoot.Setup_SimSignal_Branches(SimSignal_tree)
+    # SimSignal_Detector=GRANDRoot.Setup_SimSignalDetector_Branches(SimSignal_tree)
  
     for idx in range(0,NumberOfEvents):
     # for idx in range(0,0):
@@ -54,14 +58,14 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
         # SimShower.GetEntry(idx)
 
         # Clear the vectors for the new event
-        SimSignal['signal_sim'].clear()
-        SimSignal_Detector['det_id'].clear()
-        SimSignal_Detector['det_pos_shc'].clear()
-        SimSignal_Detector['det_type'].clear()
-        SimSignal_Detector['t_0'].clear()
-        SimSignal_Detector['trace_x'].clear()
-        SimSignal_Detector['trace_y'].clear()
-        SimSignal_Detector['trace_z'].clear()
+        # SimSignal['signal_sim'].clear()
+        # SimSignal_Detector['det_id'].clear()
+        # SimSignal_Detector['det_pos_shc'].clear()
+        # SimSignal_Detector['det_type'].clear()
+        # SimSignal_Detector['t_0'].clear()
+        # SimSignal_Detector['trace_x'].clear()
+        # SimSignal_Detector['trace_y'].clear()
+        # SimSignal_Detector['trace_z'].clear()
 
         EventID=SimShower.evt_id
         Zenith=SimShower.shower_zenith
@@ -71,7 +75,8 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
 
         #imEfield.GetEntry(idx)    #TODO: how to guarantee that SimEfield and SimShower are synchronized (meaning that the same idx represents the same event) # LWP: We create index over run,event. Then we either make simshower a friend of simeefield (or vice versa), GetEntry() on one of them and use branches of the other through the first one, or call GetEntryWithIndex(run,event) or something similar.
         # nantennas=SimEfield.Detectors_det_id.size()
-        nantennas=SimEfield.det_id.size()
+        # nantennas=SimEfield.det_id.size()
+        nantennas=len(SimEfield.det_id)
 
         logging.info("Found "+str(nantennas)+" antennas")        
 
@@ -81,10 +86,13 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
         
         SignalSimulator="CompuetVoltageOnGRANDROOT"                       
         #Populate what we can
-        SimSignal['run_id'][:]=RunID
-        SimSignal['evt_id'][:]=EventID
-        SimSignal['signal_sim'].push_back(SignalSimulator)                #TODO: Decide if this goes into the SimEfieldRun Info
-         
+        # SimSignal['run_id'][:]=RunID
+        # SimSignal['evt_id'][:]=EventID
+        # SimSignal['signal_sim'].push_back(SignalSimulator)                #TODO: Decide if this goes into the SimEfieldRun Info
+        SimSignal.run_id=RunID
+        SimSignal.evt_id=EventID
+        SimSignal.signal_sim.append(SignalSimulator)                #TODO: Decide if this goes into the SimEfieldRun Info
+
         #TODO: Treat the case where no antenna traces were found.
         for i in range(0,int(nantennas)):
             
@@ -102,17 +110,17 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
             # efieldx=np.array(SimEfield.Detectors_trace_x[i])
             # efieldy=np.array(SimEfield.Detectors_trace_y[i])
             # efieldz=np.array(SimEfield.Detectors_trace_z[i])
-            efieldx=np.array(SimEfield.trace_x[i])
-            efieldy=np.array(SimEfield.trace_y[i])
-            efieldz=np.array(SimEfield.trace_z[i])
+            efieldx=SimEfield.trace_x[i]
+            efieldy=SimEfield.trace_y[i]
+            efieldz=SimEfield.trace_z[i]
 
             efield=np.column_stack((efieldx,efieldy,efieldz))
-                        
+
             # t0=SimEfield.Detectors_t_0[i]
             t0=SimEfield.t_0[i]
 
             time=np.arange(tpre+t0,tpost+t0+10*tbinsize,tbinsize,)
-            time=time[0:np.shape(efield)[0]]   
+            time=time[0:np.shape(efield)[0]]
 
             efield=np.column_stack((time,efield))
 
@@ -136,31 +144,40 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
             print(voltagex[600],voltagey[600],voltagez[600])
             
             # LWP: push_back is only for std:vector, which can (normally) hold only 1 specific type. I think here we would just have standard TTree branches and thus use the standard something[0]=something convention
-            SimSignal_Detector['det_id'].push_back(DetectorID)
-            SimSignal_Detector['det_pos_shc'].push_back(position)
-            tmp_v = ROOT.vector("string")()
-            tmp_v.push_back("HorizonAntenna")                       #TODO: This is hardwaired, and it shouldnt
-            SimSignal_Detector['det_type'].push_back(tmp_v)   
-            SimSignal_Detector['t_0'].push_back(t0)
-            
+            # SimSignal_Detector['det_id'].push_back(DetectorID)
+            # SimSignal_Detector['det_pos_shc'].push_back(position)
+            # tmp_v = ROOT.vector("string")()
+            # tmp_v.push_back("HorizonAntenna")                       #TODO: This is hardwaired, and it shouldnt
+            # SimSignal_Detector['det_type'].push_back(tmp_v)
+            # SimSignal_Detector['t_0'].push_back(t0)
+            SimSignal_Detector.det_id.append(DetectorID)
+            SimSignal_Detector.det_pos_shc.append(position)
+            tmp_v = []
+            tmp_v.append("HorizonAntenna")                       #TODO: This is hardwaired, and it shouldnt
+            SimSignal_Detector.det_type.append(tmp_v)
+            SimSignal_Detector.t_0.append(t0)
+
             #
             #voltagex=deepcopy(voltage[:,1])
             voltagex=np.array(voltagex, dtype=np.float32)
-            tmp_trace_x  = ROOT.vector("float")()
-            tmp_trace_x.assign(voltagex)
-            SimSignal_Detector['trace_x'].push_back(tmp_trace_x)
- 
+            # tmp_trace_x  = ROOT.vector("float")()
+            # tmp_trace_x.assign(voltagex)
+            # SimSignal_Detector['trace_x'].push_back(tmp_trace_x)
+            SimSignal_Detector.trace_x.append(voltagex)
+
             #voltagey=deepcopy(voltage[:,2])
             voltagey=np.array(voltagey, dtype=np.float32)
-            tmp_trace_y  = ROOT.vector("float")()
-            tmp_trace_y.assign(voltagey)
-            SimSignal_Detector['trace_y'].push_back(tmp_trace_y)            
+            # tmp_trace_y  = ROOT.vector("float")()
+            # tmp_trace_y.assign(voltagey)
+            # SimSignal_Detector['trace_y'].push_back(tmp_trace_y)
+            SimSignal_Detector.trace_y.append(voltagey)
 
             #voltagez=deepcopy(voltage[:,3])
             voltagez=np.array(voltagez, dtype=np.float32)            
-            tmp_trace_z  = ROOT.vector("float")()
-            tmp_trace_z.assign(voltagez)
-            SimSignal_Detector['trace_z'].push_back(tmp_trace_z)                
+            # tmp_trace_z  = ROOT.vector("float")()
+            # tmp_trace_z.assign(voltagez)
+            # SimSignal_Detector['trace_z'].push_back(tmp_trace_z)
+            SimSignal_Detector.trace_z.append(voltagez)
                                                                    #TODO: Fill p2p and Hilbert things
                          
             #end for antennas
@@ -170,20 +187,20 @@ def ComputeVoltageOnROOT(inputfilename,RunID=0,outfilename="N/A"):
         #Add SimEfelid as Friend of SimSignal
         #Add SimShower as Friend of SimSignal
         # Need to remove the friend first - it was stored along the TTree in the previous Write() - otherwise AddFriend() crashes
-        SimSignal_tree.RemoveFriend(SimEfield)
-        SimSignal_tree.RemoveFriend(SimShower)
+        SimSignal_tree.RemoveFriend(SimEfield.tree)
+        SimSignal_tree.RemoveFriend(SimShower.tree)
         #Reset the Index
         SimSignal_tree.SetTreeIndex(ROOT.nullptr)
         #Build a new Index
         SimSignal_tree.BuildIndex("run_id", "evt_id")
         #Add Friends
-        SimSignal_tree.AddFriend(SimEfield)
-        SimSignal_tree.AddFriend(SimShower)
+        SimSignal_tree.AddFriend(SimEfield.tree)
+        SimSignal_tree.AddFriend(SimShower.tree)
                          
         #Now save the tree
         SimSignal_tree.Write("", ROOT.TObject.kWriteDelete) #this is to avoid having several copies of the tree in the index of the file
     
-    SimEfield.RemoveFriend(SimShower)
+    SimEfield.RemoveFriend(SimShower.tree)
     print("*********ABOUT TO CLOSE")
     infilehandle.Close()        
     outfilehandle.Close() #close 

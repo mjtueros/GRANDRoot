@@ -2,21 +2,26 @@
 import sys
 import ZHAireSRawToGRANDROOT as ZHAireS2ROOT
 import ComputeVoltageOnGRANDROOT as ComputeVoltage
-from GRANDRoot import SimEfieldTree
+from GRANDRootTrees import *
 import numpy as np
 
+# """
 t = SimEfieldTree()
-t.Setup_SimEfield_Branches(create_branches=True)
+# t.Setup_SimEfield_Branches(create_branches=True)
 t.tree.Print()
 t.Scan()
 t.Fill()
 t.Scan()
 t.evt_id=1
-t.field_sim = "zhacorea"
-t.refractivity_param = np.array([1., 1.5], dtype=np.float32)
+t.field_sim = ["zhacorea"]
+t.refractivity_param = np.array([2.1, 1.5], dtype=np.float32)
 t.Fill()
 t.Scan()
+#t.GetEvent(1)
+print(t.field_sim)
+print(t.evt_id)
 exit()
+# """
 
 if ( len(sys.argv)<2 ):
     print("usage python RunTest.py outputfile")

@@ -1,6 +1,5 @@
 import ROOT
 import numpy as np
-from dataclasses import dataclass, field
 
 '''
 The idea is to have at least 2 TTree per file section. One for event level information, and one for run level information
@@ -24,7 +23,7 @@ EventLevel information should be as complete as possible to make event
 #      c)Adding or removing parameters will change the "FillBranches" function, braking functions using them and forcing to update (which might not always be a happy thing)
 
 
-# Create or Set rhe TTree branches for SimShower_Run (Simulated Showeer Run Level information )
+# Create or Set rhe TTree branches for SimShower_Run (Simulated Shower Run Level information )
 def Setup_SimShowerRun_Branches(tree,create_branches=True):
     t = tree
     # Reset all branch addresses just in case
@@ -228,15 +227,18 @@ def Setup_SimEfieldDetector_Branches(tree, create_branches=True):
         # Vector branch        
         if root_types[key]=="/C" or root_types[key]=="vec":
           #print(key,val) 	
-          t.Branch("Detectors_"+key, val)
+          # t.Branch("Detectors_"+key, val)
+          t.Branch(key, val)
         # Scalar branch
         else:
           #print("key",key,val)
-          t.Branch("Detectors_"+key, val, f"{key}{root_types[key]}")
+          # t.Branch("Detectors_"+key, val, f"{key}{root_types[key]}")
+          t.Branch(key, val, f"{key}{root_types[key]}")
       #If branches are reaccessed, just set their addresses
       else:
-        t.SetBranchAddress("Detectors_"+key, val)
-    return values 
+        # t.SetBranchAddress("Detectors_"+key, val)
+        t.SetBranchAddress(key, val)
+    return values
      
 
 
@@ -332,146 +334,14 @@ def Setup_SimSignalDetector_Branches(tree,create_branches=True):                
       if create_branches:
         # Vector branch
         if root_types[key]=="/C" or root_types[key]=="vec":
-            t.Branch("Detectors_"+key, val)
+            # t.Branch("Detectors_"+key, val)
+            t.Branch(key, val)
         # Scalar branch
         else:
-            t.Branch("Detectors_"+key, val, f"{key}{root_types[key]}")
+            # t.Branch("Detectors_"+key, val, f"{key}{root_types[key]}")
+            t.Branch(key, val, f"{key}{root_types[key]}")
       #If branches are reaccessed, just set their addresses
       else:
-        t.SetBranchAddress("Detectors_"+key, val)
+        # t.SetBranchAddress("Detectors_"+key, val)
+        t.SetBranchAddress(key, val)
     return values
-    
-@dataclass
-class SimEfieldTree:
-
-    _tree : ROOT.TTree = ROOT.TTree("SimEfield", "SimEfield")
-
-    _run_id : np.ndarray = np.zeros(1, np.uint32)
-    _evt_id: np.ndarray = np.zeros(1, np.uint32)
-    _field_sim: ROOT.vector("string") = ROOT.vector("string")()
-    _refractivity_model: ROOT.vector("string") = ROOT.vector("string")()
-    _refractivity_param: np.ndarray = np.zeros(2, np.float32)
-    _t_pre: np.ndarray = np.zeros(1, np.float32)
-    _t_post: np.ndarray = np.zeros(1, np.float32)
-    _t_bin_size: np.ndarray = np.zeros(1, np.float32)
-
-    @property
-    def tree(self):
-        return self._tree
-
-    @property
-    def run_id(self):
-        return self._run_id[0]
-
-    @run_id.setter
-    def run_id(self, val : np.uint32) -> None:
-        self._run_id[0] = val
-
-    @property
-    def evt_id(self):
-        return self._evt_id[0]
-
-    @evt_id.setter
-    def evt_id(self, val : np.uint32) -> None:
-        self._evt_id[0] = val
-
-    @property
-    def field_sim(self):
-        return str(self._field_sim)
-
-    @field_sim.setter
-    def field_sim(self, val : str) -> None:
-        self._field_sim.clear()
-        self._field_sim.push_back(val)
-
-    @property
-    def refractivity_model(self):
-        return str(self._refractivity_model)
-
-    @refractivity_model.setter
-    def field_sim(self, val : str) -> None:
-        self._field_sim.clear()
-        self._field_sim.push_back(val)
-
-    @property
-    def refractivity_param(self):
-        return self._evt_id[0]
-
-    @refractivity_param.setter
-    def refractivity_param(self, val : np.ndarray) -> None:
-        self._tree.SetBranchAddress("refractivity_param", val)
-
-    @property
-    def t_pre(self):
-        return self._t_pre[0]
-
-    @t_pre.setter
-    def t_pre(self, val : np.float32) -> None:
-        self._t_pre[0] = val
-
-    @property
-    def t_post(self):
-        return self._t_post[0]
-
-    @t_post.setter
-    def t_post(self, val : np.float32) -> None:
-        self._t_post[0] = val
-
-    @property
-    def t_bin_size(self):
-        return self._t_bin_size[0]
-
-    @t_bin_size.setter
-    def t_bin_size(self, val : np.float32) -> None:
-        self.t_bin_size[0] = val
-
-    # Create or Set the  TTree branches for SimEfield (Simulated Electric Field Event Level Information)
-    def Setup_SimEfield_Branches(self, create_branches=True):
-        t = self._tree
-        # Reset all branch addresses just in case
-        t.ResetBranchAddresses()
-
-        values = {"run_id": self._run_id,                  #runID TODO: datatype. standarize. Do we want also a name or a short description? (so, a number and a string)
-                  "evt_id": self._evt_id,                  #eventID TODO: datatype. standarize. Do we want also a name? (so, a number and a string)
-                  "field_sim": self._field_sim,              #name and model of the electric field simulator. TODO: Standarize
-                  "refractivity_model": self._refractivity_model,     #name of the atmospheric index of refraction model. TODO:Standarize
-                  "refractivity_param": self._refractivity_param,     #parameters of the atmospheric index of refraction model. TODO: Standarize. Think how to support different model needs.
-                  "t_pre": self._t_pre,                   #The antenna time window is defined arround a t0 that changes with the antenna, starts on t0+t_pre (thus t_pre is usually negative) and ends on t0+post
-                  "t_post": self._t_post,                  #TODO: Should we support different antenna trace sizes? Currently its not posible. If that is the case, should t_pre,t_post and t_bin_size be on SimEfieldRun?
-                  "t_bin_size": self._t_bin_size
-                 }
-        root_types = {"run_id": "/i",
-                      "evt_id": "/i",
-                      "field_sim": "/C",
-                      "refractivity_model": "/C",
-                      "refractivity_param": "[2]/F",
-                      "t_pre":"/F",
-                      "t_post":"/F",
-                      "t_bin_size":"/F",
-                     }
-
-        for key,val in values.items():
-         # If the branches are created for the first time
-         if create_branches:
-           # Vector branch
-           if root_types[key]=="/C" or root_types[key]=="vec":
-             t.Branch(key, val)
-             print("set",key,val)
-             # Scalar branch
-           else:
-             t.Branch(key, val, f"{key}{root_types[key]}")
-             print("set2",key,val)
-        # If branches are reaccessed, just set their addresses
-         else:
-           t.SetBranchAddress(key, val)
-        return values
-
-    def Fill(self):
-        self._tree.Fill()
-
-    def Write(self, *args):
-        self._tree.Write(*args)
-
-    def Scan(self, *args):
-        self._tree.Scan(*args)
-
