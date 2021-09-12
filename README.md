@@ -19,3 +19,16 @@ Since im not experienced in github, lets follow this simple development scheme, 
 
 https://guides.github.com/introduction/flow/
 
+# Documentation
+
+This version features a documentation made using sphinx
+
+## Generating the documentation
+
+### Requirements
+
+Install doxygen
+
+### Build the documentation
+
+Enter the ``doc`` directory and run ``doxygen``

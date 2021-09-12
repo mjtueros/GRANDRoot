@@ -31,7 +31,7 @@ def Setup_SimShowerRun_Branches(tree,create_branches=True):
     @param tree (string) a TTree
     @param create_branches (bool) toggles the branch creation on and off
     
-    @return values the current values for the branches
+    @return The current values for the branches
     """
     t = tree
     # Reset all branch addresses just in case

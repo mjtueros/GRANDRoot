@@ -1,0 +1,4 @@
+GRANDRoot
+=====================
+
+.. doxygennamespace:: GRANDRoot
